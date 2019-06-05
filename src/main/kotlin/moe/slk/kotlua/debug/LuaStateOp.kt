@@ -5,10 +5,15 @@ import moe.slk.kotlua.api.ArithOp.LUA_OPBNOT
 import moe.slk.kotlua.api.CmpOp.LUA_OPEQ
 import moe.slk.kotlua.api.LuaState
 import moe.slk.kotlua.api.LuaType.*
+import moe.slk.kotlua.binchunk.unDump
 import moe.slk.kotlua.state.LuaStateImpl
+import java.nio.file.Files
+import java.nio.file.Paths
 
-fun testOp() {
-    val ls = LuaStateImpl()
+fun testOp(path: String) {
+    val data = Files.readAllBytes(Paths.get(path))
+    val proto = unDump(data)
+    val ls = LuaStateImpl(proto)
     ls.pushInteger(1)
     ls.pushString("2.0")
     ls.pushString("3.0")

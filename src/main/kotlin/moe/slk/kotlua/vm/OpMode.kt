@@ -1,4 +1,4 @@
-package moe.slk.kotlua.vm.types
+package moe.slk.kotlua.vm
 
 enum class OpMode {
     iABC, // [  B:9  ][  C:9  ][ A:8  ][OP:6]

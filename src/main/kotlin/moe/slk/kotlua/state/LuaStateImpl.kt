@@ -5,12 +5,14 @@ import moe.slk.kotlua.api.ArithOp.LUA_OPBNOT
 import moe.slk.kotlua.api.ArithOp.LUA_OPUNM
 import moe.slk.kotlua.api.CmpOp
 import moe.slk.kotlua.api.CmpOp.*
-import moe.slk.kotlua.api.LuaState
 import moe.slk.kotlua.api.LuaType
 import moe.slk.kotlua.api.LuaType.*
+import moe.slk.kotlua.api.LuaVM
+import moe.slk.kotlua.binchunk.types.Prototype
 
-class LuaStateImpl : LuaState {
+class LuaStateImpl(val proto: Prototype) : LuaVM {
     private val stack = LuaStack()
+    private var pc = 0
     override var top: Int
         get() = stack.top
         set(idx) {
@@ -222,5 +224,30 @@ class LuaStateImpl : LuaState {
         }
 
         // n == 1, do nothing
+    }
+
+    /* LuaVM */
+    override fun getPC(): Int {
+        return pc
+    }
+
+    override fun addPC(n: Int) {
+        pc += n
+    }
+
+    override fun fetch(): Int {
+        return proto.code[pc++]
+    }
+
+    override fun getConst(idx: Int) {
+        stack.push(proto.constants[idx])
+    }
+
+    override fun getRK(rk: Int) {
+        if (rk > 0xFF) { // constant
+            getConst(rk and 0xFF)
+        } else { // register
+            pushValue(rk + 1)
+        }
     }
 }

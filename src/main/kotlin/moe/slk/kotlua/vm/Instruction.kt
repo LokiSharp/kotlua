@@ -1,8 +1,7 @@
 package moe.slk.kotlua.vm
 
-import moe.slk.kotlua.vm.types.OpArgMask.*
-import moe.slk.kotlua.vm.types.OpCode
-import moe.slk.kotlua.vm.types.OpMode.*
+import moe.slk.kotlua.vm.OpArgMask.*
+import moe.slk.kotlua.vm.OpMode.*
 
 /*
  31       22       13       5    0

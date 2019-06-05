@@ -1,4 +1,4 @@
-package moe.slk.kotlua.vm.types
+package moe.slk.kotlua.vm
 
 enum class OpArgMask {
     OpArgN, // argument is not used

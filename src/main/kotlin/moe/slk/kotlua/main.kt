@@ -2,6 +2,8 @@ package moe.slk.kotlua
 
 import moe.slk.kotlua.binchunk.types.Prototype
 import moe.slk.kotlua.binchunk.unDump
+import moe.slk.kotlua.vm.Instruction
+import moe.slk.kotlua.vm.types.OpCode
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -41,15 +43,19 @@ private fun printHeader(prototype: Prototype) {
 
 private fun printCode(prototype: Prototype) {
     with(prototype) {
-        for (i in code.indices) {
+        code.forEachIndexed { i, code ->
             val line = if (lineInfo.isNotEmpty()) lineInfo[i].toString() else "-"
-            println("\t${i + 1}\t[$line]\t0x${code[i].formatHex(8)}")
+            val inst = Instruction(code)
+            print("\t${i + 1}\t[$line]\t0x${code.formatHex(8)}\t${inst.opCode.formatString(8)}\t")
+            inst.printOperands()
+            println()
         }
     }
 }
 
-private fun Int.formatHex(digits: Int) = java.lang.String.format("%0${digits}X", this)
+private fun OpCode.formatString(digits: Int) = java.lang.String.format("%-${digits}s", this)
 
+private fun Int.formatHex(digits: Int) = java.lang.String.format("%0${digits}X", this)
 
 private fun printDetail(prototype: Prototype) {
     with(prototype) {

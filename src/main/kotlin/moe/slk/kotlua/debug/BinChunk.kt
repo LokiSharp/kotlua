@@ -1,6 +1,6 @@
 package moe.slk.kotlua.debug
 
-import moe.slk.kotlua.binchunk.types.Prototype
+import moe.slk.kotlua.binchunk.Prototype
 import moe.slk.kotlua.binchunk.unDump
 import moe.slk.kotlua.vm.Instruction
 import moe.slk.kotlua.vm.OpCode

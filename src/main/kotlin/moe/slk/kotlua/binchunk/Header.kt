@@ -1,5 +1,23 @@
-package moe.slk.kotlua.binchunk.types
+package moe.slk.kotlua.binchunk
 
+/**
+ * 二进制 chunk 头定义
+ *
+ * 头部总共占用约 30 个字节（因平台而异），其中包含签名、版本号、格式号、各种整数类型占用的字节数，以及大小端和浮点数格
+ * 式识别信息等。
+ *
+ * @param signature 用于快速识别文件格式
+ * @param version 用于检验 chunk 文件版本是否与虚拟机匹配
+ * @param format 用于检验 chunk 文件格式是否与虚拟机匹配
+ * @param luacData 二次校验
+ * @param cintSize cint 类型宽度
+ * @param sizetSize size_t 类型宽度
+ * @param instructionSize 虚拟机指令宽度
+ * @param luaIntegerSize 整数类型宽度
+ * @param luaNumberSize 浮点数类型宽度
+ * @param luacInt 用于检测二进制 chunk 的大小端方式
+ * @param luacNum 用于检测二进制 chunk 的浮点数格式
+ */
 data class Header(
     val signature: ByteArray,
     val version: Byte,

@@ -8,7 +8,7 @@ import moe.slk.kotlua.api.CmpOp.*
 import moe.slk.kotlua.api.LuaType
 import moe.slk.kotlua.api.LuaType.*
 import moe.slk.kotlua.api.LuaVM
-import moe.slk.kotlua.binchunk.types.Prototype
+import moe.slk.kotlua.binchunk.Prototype
 
 class LuaStateImpl(val proto: Prototype) : LuaVM {
     private val stack = LuaStack()

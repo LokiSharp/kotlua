@@ -1,13 +1,13 @@
 package moe.slk.kotlua.binchunk
 
-import moe.slk.kotlua.binchunk.types.LocVar
-import moe.slk.kotlua.binchunk.types.Prototype
-import moe.slk.kotlua.binchunk.types.Upvalue
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 
 private class Reader(val buf: ByteBuffer) {
+    /**
+     * 检查二进制 chunk 头部
+     */
     fun checkHeader() {
         when {
             !LUA_SIGNATURE.contentEquals(readBytes(4)) -> throw RuntimeException("not a precompiled chunk!")
@@ -24,6 +24,9 @@ private class Reader(val buf: ByteBuffer) {
         }
     }
 
+    /**
+     * 从字节流中读取函数原型
+     */
     fun readProto(parentSource: String = ""): Prototype {
         var source = readString()
         if (source.isEmpty()) {
@@ -47,6 +50,9 @@ private class Reader(val buf: ByteBuffer) {
         )
     }
 
+    /**
+     * 从字节流中读取指令表
+     */
     fun readCode(): List<Int> {
         val length = buf.int
         val code = ArrayList<Int>(length)
@@ -58,6 +64,9 @@ private class Reader(val buf: ByteBuffer) {
         return code
     }
 
+    /**
+     * 从字节流中读取常量表
+     */
     fun readConstants(): List<Any?> {
         val length = buf.int
         val constants = ArrayList<Any?>(length)
@@ -69,6 +78,9 @@ private class Reader(val buf: ByteBuffer) {
         return constants
     }
 
+    /**
+     * 从字节流中读取常量
+     */
     fun readConstant(): Any? {
         return when (buf.get().toInt()) {
             TAG_NIL -> null
@@ -80,6 +92,10 @@ private class Reader(val buf: ByteBuffer) {
         }
     }
 
+    /**
+     * 从字节流中读取字符串
+     * @return 字符串
+     */
     fun readString(): String {
         var size = buf.get().toInt()
 
@@ -94,6 +110,9 @@ private class Reader(val buf: ByteBuffer) {
         return String(readBytes(size - 1))
     }
 
+    /**
+     * 从字节流中读取 Upvalue 表
+     */
     fun readUpvalues(): List<Upvalue> {
         val length = buf.int
         val upvalues = ArrayList<Upvalue>(length)
@@ -110,6 +129,9 @@ private class Reader(val buf: ByteBuffer) {
         return upvalues
     }
 
+    /**
+     * 从字节流中读取函数原型表
+     */
     fun readProtos(parentSource: String = ""): List<Prototype> {
         val length = buf.int
         val protos = ArrayList<Prototype>(length)
@@ -121,6 +143,9 @@ private class Reader(val buf: ByteBuffer) {
         return protos
     }
 
+    /**
+     * 从字节流中读取行号表
+     */
     fun readLineInfo(): List<Int> {
         val size = buf.int
         val lineInfo = ArrayList<Int>()
@@ -132,6 +157,9 @@ private class Reader(val buf: ByteBuffer) {
         return lineInfo
     }
 
+    /**
+     * 从字节流中读取局部变量表
+     */
     fun readLocVars(): List<LocVar> {
         val size = buf.int
         val locVars = ArrayList<LocVar>(size)
@@ -149,6 +177,9 @@ private class Reader(val buf: ByteBuffer) {
         return locVars
     }
 
+    /**
+     * 从字节流中读取 Upvalue 名表
+     */
     fun readUpvalueNames(): List<String> {
         val size = buf.int
         val upvalueNames = ArrayList<String>(size)
@@ -160,8 +191,17 @@ private class Reader(val buf: ByteBuffer) {
         return upvalueNames
     }
 
+    /**
+     * 从字节流中读取一个字节
+     * @return 一个字节
+     */
     fun readByte() = buf.get()
 
+    /**
+     * 从字节流中读取 n 个字节
+     * @param n 想要提取的字节数
+     * @return n 个字节
+     */
     fun readBytes(n: Int): ByteArray {
         val a = ByteArray(n)
         buf.get(a)
@@ -169,12 +209,17 @@ private class Reader(val buf: ByteBuffer) {
     }
 }
 
-
+/**
+ * 解析二进制 chunk
+ *
+ * @param data 二进制 chunk
+ * @return 函数原型
+ */
 fun unDump(data: ByteArray): Prototype {
     val buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
     val reader = Reader(buf)
 
-    reader.checkHeader()
-    reader.readByte()
-    return reader.readProto()
+    reader.checkHeader() // 校验函数头
+    reader.readByte() // 跳过 Upvalue
+    return reader.readProto() // 返回函数原型
 }

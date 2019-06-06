@@ -2,8 +2,8 @@ package moe.slk.kotlua.debug
 
 import moe.slk.kotlua.api.LuaState
 import moe.slk.kotlua.api.LuaType.*
+import moe.slk.kotlua.binchunk.BinaryChunk
 import moe.slk.kotlua.binchunk.Prototype
-import moe.slk.kotlua.binchunk.unDump
 import moe.slk.kotlua.state.LuaStateImpl
 import moe.slk.kotlua.vm.Instruction
 import moe.slk.kotlua.vm.OpCode
@@ -11,8 +11,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 fun testBasicInstructions(path: String) {
-    val data = Files.readAllBytes(Paths.get(path))
-    val proto = unDump(data)
+    val data = Files.readAllBytes(Paths.get(path)) as ByteArray
+    val proto = BinaryChunk.unDump(data)
     luaMain(proto)
 }
 

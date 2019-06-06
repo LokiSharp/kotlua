@@ -37,9 +37,8 @@ private fun printStack(ls: LuaState) {
 
     repeat(top) {
         val i = it + 1
-        val t = ls.type(i)
 
-        when (t) {
+        when (val t = ls.type(i)) {
             LUA_TBOOLEAN -> System.out.printf("[%b]", ls.toBoolean(i))
 
             LUA_TNUMBER -> {

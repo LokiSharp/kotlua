@@ -79,11 +79,9 @@ private fun printDetail(prototype: Prototype) {
 }
 
 private fun constantToString(k: Any?): String {
-    return if (k == null) {
-        "nil"
-    } else if (k is String) {
-        "\"" + k + "\""
-    } else {
-        k.toString()
+    return when (k) {
+        null -> "nil"
+        is String -> "\"" + k + "\""
+        else -> k.toString()
     }
 }

@@ -37,8 +37,7 @@ private fun luaMain(proto: Prototype) {
 
 private fun printStack(ls: LuaState) {
     for (i in 1..ls.top) {
-        val t = ls.type(i)
-        when (t) {
+        when (val t = ls.type(i)) {
             LUA_TBOOLEAN -> System.out.printf("[%b]", ls.toBoolean(i))
             LUA_TNUMBER -> if (ls.isInteger(i)) {
                 System.out.printf("[%d]", ls.toInteger(i))

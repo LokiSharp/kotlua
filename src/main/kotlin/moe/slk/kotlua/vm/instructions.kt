@@ -477,3 +477,106 @@ fun forLoop(i: Instruction, vm: LuaVM) {
         vm.copy(a, a + 3)
     }
 }
+
+
+/**
+ * 创建新表
+ *
+ * R(A) := {} (size = B,C)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
+fun newTable(i: Instruction, vm: LuaVM) {
+    vm.createTable(fb2int(i.b), fb2int(i.c))
+    vm.replace(i.a + 1)
+}
+
+
+/**
+ * 表索引取值
+ *
+ * R(A) := R(B)[RK(C)]
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
+fun getTable(i: Instruction, vm: LuaVM) {
+    vm.getRK(i.c)
+    vm.getTable(i.b + 1)
+    vm.replace(i.a + 1)
+}
+
+/**
+ * 根据键往表里赋值
+ *
+ * R(A)[RK(B)] := RK(C)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
+fun setTable(i: Instruction, vm: LuaVM) {
+    vm.getRK(i.b)
+    vm.getRK(i.c)
+    vm.setTable(i.a + 1)
+}
+
+/**
+ * 根据键往数组里赋值
+ *
+ * R(A)[(C-1)*FPF+i] := R(A+i), 1 <= i <= B
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
+fun setList(i: Instruction, vm: LuaVM) {
+    val a = i.a + 1
+    val b = i.b
+    var c = i.c
+    c = if (c > 0) c - 1 else Instruction(vm.fetch()).ax
+
+    vm.checkStack(1)
+    var idx = c * LFIELDS_PER_FLUSH
+    for (j in 1..b) {
+        idx++
+        vm.pushValue(a + j)
+        vm.setI(a, idx.toLong())
+    }
+}
+
+/**
+ * 浮点字节编码
+ *
+ * @param i 整型
+ * @return 浮点编码整型
+ */
+fun int2fb(i: Int): Int {
+    var x = i
+    var e = 0 /* exponent */
+    if (x < 8) {
+        return x
+    }
+    while (x >= 8 shl 4) { /* coarse steps */
+        x = x + 0xf shr 4 /* x = ceil(x / 16) */
+        e += 4
+    }
+    while (x >= 8 shl 1) { /* fine steps */
+        x = x + 1 shr 1 /* x = ceil(x / 2) */
+        e++
+    }
+    return e + 1 shl 3 or x - 8
+}
+
+/**
+ * 浮点字节解码
+ *
+ * @param i 浮点编码整型
+ * @return 整型
+ */
+fun fb2int(i: Int): Int {
+    return if (i < 8) {
+        i
+    } else {
+        (i and 7) + 8 shl (i shr 3) - 1
+    }
+}

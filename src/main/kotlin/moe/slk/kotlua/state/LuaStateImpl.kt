@@ -10,6 +10,7 @@ import moe.slk.kotlua.api.LuaType.*
 import moe.slk.kotlua.api.LuaVM
 import moe.slk.kotlua.binchunk.Prototype
 
+
 /**
  * 实现堆栈操作
  * @param proto 函数原型
@@ -365,12 +366,11 @@ class LuaStateImpl(private val proto: Prototype) : LuaVM {
      * @param idx 索引
      */
     override fun len(idx: Int) {
-        val value = stack.get(idx)
 
-        if (value is String) {
-            pushInteger(value.length.toLong())
-        } else {
-            throw Exception("length error!")
+        when (val value = stack.get(idx)) {
+            is String -> pushInteger(value.length.toLong())
+            is LuaTable -> pushInteger(value.getLength().toLong())
+            else -> throw Exception("length error!")
         }
     }
 
@@ -442,5 +442,118 @@ class LuaStateImpl(private val proto: Prototype) : LuaVM {
         } else { // register
             pushValue(rk + 1)
         }
+    }
+
+    /**
+     * 创建一个尺寸为 0 的表，将其推入栈顶
+     */
+    override fun newTable() {
+        createTable(0, 0)
+    }
+
+    /**
+     * 创建一个空的表，将其推入栈顶
+     * @param nArr 数组大小
+     * @param nRec 哈希表大小
+     */
+    override fun createTable(nArr: Int, nRec: Int) {
+        stack.push(LuaTable(nArr, nRec))
+    }
+
+    /**
+     * 根据键获取表中对应值的类型
+     * @param idx 索引
+     * @return 对应值的类型
+     */
+    override fun getTable(idx: Int): LuaType {
+        val t = stack.get(idx)
+        val k = stack.pop()
+        return getTable(t, k)
+    }
+
+    /**
+     * 根据字符串获取相应索引的表中对应值的类型
+     * @param idx 索引
+     * @param k 字符串
+     * @return 对应值的类型
+     */
+    override fun getField(idx: Int, k: String): LuaType {
+        val t = stack.get(idx)
+        return getTable(t, k)
+    }
+
+    /**
+     * 根据数值获取相应索引的表中对应值的类型
+     * @param idx 索引
+     * @param  i 数值
+     * @return 对应值的类型
+     */
+    override fun getI(idx: Int, i: Long): LuaType {
+        val t = stack.get(idx)
+        return getTable(t, i)
+    }
+
+    /**
+     * 根据键从表里取值
+     * @param t 表
+     * @param k 键
+     * @return 对应值的类型
+     */
+    private fun getTable(t: Any?, k: Any?): LuaType {
+        if (t is LuaTable) {
+            val v = t[k]
+            stack.push(v)
+            return typeOf(v)
+        }
+        throw Exception("not a table!") // todo
+    }
+
+    /* set functions (stack -> Lua) */
+
+    /**
+     * 把键值对写入表
+     * @param idx 索引
+     */
+    override fun setTable(idx: Int) {
+        val t = stack.get(idx)
+        val v = stack.pop()
+        val k = stack.pop()
+        setTable(t, k, v)
+    }
+
+    /**
+     * 把字符串写入表
+     * @param idx 索引
+     * @param k 字符串
+     */
+    override fun setField(idx: Int, k: String) {
+        val t = stack.get(idx)
+        val v = stack.pop()
+        setTable(t, k, v)
+    }
+
+    /**
+     * 把数值写入表
+     * @param idx 索引
+     * @param i 数值
+     */
+    override fun setI(idx: Int, i: Long) {
+        val t = stack.get(idx)
+        val v = stack.pop()
+        setTable(t, i, v)
+    }
+
+    /**
+     * 根据键从将值写入表中
+     * @param t 表
+     * @param k 键
+     * @param v 值
+     */
+    private fun setTable(t: Any?, k: Any?, v: Any?) {
+        if (t is LuaTable) {
+            t.put(k, v)
+            return
+        }
+        throw Exception("not a table!")
     }
 }

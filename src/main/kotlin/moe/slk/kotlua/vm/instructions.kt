@@ -9,12 +9,26 @@ import moe.slk.kotlua.api.LuaVM
 
 /* misc */
 
-// R(A) := R(B)
+/**
+ * 用于把源寄存器里的值移动到目标寄存器里
+ *
+ * R(A) := R(B)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun move(i: Instruction, vm: LuaVM) {
     vm.copy(i.b + 1, i.a + 1)
 }
 
-// pc+=sBx; if (A) close all upvalues >= R(A - 1)
+/**
+ * 用于执行无条件跳转
+ *
+ * pc+=sBx; if (A) close all upvalues >= R(A - 1)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun jmp(i: Instruction, vm: LuaVM) {
     vm.addPC(i.sBx)
     if (i.a != 0) {
@@ -24,7 +38,14 @@ fun jmp(i: Instruction, vm: LuaVM) {
 
 /* load */
 
-// R(A), R(A+1), ..., R(A+B) := nil
+/**
+ * 用于给连续n个寄存器放置 nil 值
+ *
+ * R(A), R(A+1), ..., R(A+B) := nil
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun loadNil(i: Instruction, vm: LuaVM) {
     val a = i.a + 1
     val b = i.b
@@ -38,7 +59,14 @@ fun loadNil(i: Instruction, vm: LuaVM) {
     vm.pop(1)
 }
 
-// R(A) := (bool)B; if (C) pc++
+/**
+ * 用于给单个寄存器设置布尔值
+ *
+ * R(A) := (bool)B; if (C) pc++
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun loadBool(i: Instruction, vm: LuaVM) {
     vm.pushBoolean(i.b != 0)
 
@@ -48,14 +76,27 @@ fun loadBool(i: Instruction, vm: LuaVM) {
     }
 }
 
-
-// R(A) := Kst(Bx)
+/**
+ * 用于将常量表里的某个常量加载到指定寄存器
+ *
+ * R(A) := Kst(Bx)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun loadK(i: Instruction, vm: LuaVM) {
     vm.getConst(i.bx)
     vm.replace(i.a + 1)
 }
 
-// R(A) := Kst(extra arg)
+/**
+ * 用于将常量表里的某个常量加载到指定寄存器
+ *
+ * R(A) := Kst(extra arg)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun loadKx(i: Instruction, vm: LuaVM) {
     val ax = Instruction(vm.fetch()).ax
 
@@ -65,64 +106,156 @@ fun loadKx(i: Instruction, vm: LuaVM) {
 
 /* arith */
 
+/**
+ * 加
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun add(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPADD)
 } // +
 
+/**
+ * 减
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun sub(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPSUB)
 } // -
 
+/**
+ * 乘
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun mul(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPMUL)
 } // *
 
+/**
+ * 模
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun mod(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPMOD)
 } // %
 
+/**
+ * 乘
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun pow(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPPOW)
 } // ^
 
+/**
+ * 无符号除
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun div(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPDIV)
 } // /
 
+/**
+ * 有符号除
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun idiv(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPIDIV)
 } // //
 
+/**
+ * 按位与
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun band(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPBAND)
 } // &
 
+/**
+ * 按位或
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun bor(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPBOR)
 } // |
 
+/**
+ * 按位异或
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun bxor(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPBXOR)
 } // ~
 
+/**
+ * 左位移
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun shl(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPSHL)
 } // <<
 
+/**
+ * 右位移
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun shr(i: Instruction, vm: LuaVM) {
     binaryArith(i, vm, LUA_OPSHR)
 } // >>
 
+/**
+ * 取反
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun unm(i: Instruction, vm: LuaVM) {
     unaryArith(i, vm, LUA_OPUNM)
 } // -
 
+/**
+ * 按位取反
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun bnot(i: Instruction, vm: LuaVM) {
     unaryArith(i, vm, LUA_OPBNOT)
 } // ~
 
 
-// R(A) := RK(B) op RK(C)
+/**
+ * 二进制运算
+ *
+ * R(A) := RK(B) op RK(C)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ * @param op 运算符
+ */
 private fun binaryArith(i: Instruction, vm: LuaVM, op: ArithOp) {
     vm.getRK(i.b)
     vm.getRK(i.c)
@@ -131,7 +264,15 @@ private fun binaryArith(i: Instruction, vm: LuaVM, op: ArithOp) {
     vm.replace(i.a + 1)
 }
 
-// R(A) := op R(B)
+/**
+ * 一元运算
+ *
+ * R(A) := op R(B)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ * @param op 运算符
+ */
 private fun unaryArith(i: Instruction, vm: LuaVM, op: ArithOp) {
     vm.pushValue(i.b + 1)
     vm.arith(op)
@@ -139,19 +280,45 @@ private fun unaryArith(i: Instruction, vm: LuaVM, op: ArithOp) {
 }
 
 /* compare */
+/**
+ * 等于
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun eq(i: Instruction, vm: LuaVM) {
     compare(i, vm, LUA_OPEQ)
 } // ==
 
+/**
+ * 小于
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun lt(i: Instruction, vm: LuaVM) {
     compare(i, vm, LUA_OPLT)
 } // <
 
+/**
+ * 小于等于
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun le(i: Instruction, vm: LuaVM) {
     compare(i, vm, LUA_OPLE)
 } // <=
 
-// if ((RK(B) op RK(C)) ~= A) then pc++
+/**
+ * 比较运算
+ *
+ * if ((RK(B) op RK(C)) ~= A) then pc++
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ * @param op 运算符
+ */
 private fun compare(i: Instruction, vm: LuaVM, op: CmpOp) {
     vm.getRK(i.b)
     vm.getRK(i.c)
@@ -162,21 +329,42 @@ private fun compare(i: Instruction, vm: LuaVM, op: CmpOp) {
 }
 
 /* logical */
-
-// R(A) := not R(B)
+/**
+ * 逻辑非
+ *
+ * R(A) := not R(B)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun not(i: Instruction, vm: LuaVM) {
     vm.pushBoolean(!vm.toBoolean(i.b + 1))
     vm.replace(i.a + 1)
 }
 
-// if not (R(A) <=> C) then pc++
+/**
+ * 判断寄存器 A 中的值转换为布尔值之后是否和操作数C表示的布尔值一致，如果一致，则跳过下一条指令
+ *
+ * if not (R(A) <=> C) then pc++
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun test(i: Instruction, vm: LuaVM) {
     if (vm.toBoolean(i.a + 1) != (i.c != 0)) {
         vm.addPC(1)
     }
 }
 
-// if (R(B) <=> C) then R(A) := R(B) else pc++
+/**
+ * 判断寄存器 B 中的值转换为布尔值之后是否和操作数 C 表示的布尔值一致，如果一致则将寄存器 B 中的值复制到寄
+ * 存器 A 中，否则跳过下一条指令
+ *
+ * if (R(B) <=> C) then R(A) := R(B) else pc++
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun testSet(i: Instruction, vm: LuaVM) {
     val a = i.a + 1
     val b = i.b + 1
@@ -189,13 +377,27 @@ fun testSet(i: Instruction, vm: LuaVM) {
 
 /* len & concat */
 
-// R(A) := length of R(B)
+/**
+ * 长度运算符
+ *
+ * R(A) := length of R(B)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun length(i: Instruction, vm: LuaVM) {
     vm.len(i.b + 1)
     vm.replace(i.a + 1)
 }
 
-// R(A) := R(B).. ... ..R(C)
+/**
+ * 将连续 n 个寄存器里的值拼接，将结果放入另一个寄存器
+ *
+ * R(A) := R(B).. ... ..R(C)
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun concat(i: Instruction, vm: LuaVM) {
     val a = i.a + 1
     val b = i.b + 1
@@ -212,7 +414,14 @@ fun concat(i: Instruction, vm: LuaVM) {
 
 /* for */
 
-// R(A)-=R(A+2); pc+=sBx
+/**
+ * 数值形式 for 循环
+ *
+ * R(A)-=R(A+2); pc+=sBx
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun forPrep(i: Instruction, vm: LuaVM) {
     val a = i.a + 1
     val sBx = i.sBx
@@ -237,10 +446,17 @@ fun forPrep(i: Instruction, vm: LuaVM) {
     vm.addPC(sBx)
 }
 
-// R(A)+=R(A+2);
-// if R(A) <?= R(A+1) then {
-//   pc+=sBx; R(A+3)=R(A)
-// }
+/**
+ * 通用形式 for 循环
+ *
+ * R(A)+=R(A+2);
+ * if R(A) <?= R(A+1) then {
+ *   pc+=sBx; R(A+3)=R(A)
+ * }
+ *
+ * @param i 指令
+ * @param vm 虚拟机对象
+ */
 fun forLoop(i: Instruction, vm: LuaVM) {
     val a = i.a + 1
     val sBx = i.sBx

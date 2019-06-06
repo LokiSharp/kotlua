@@ -3,6 +3,9 @@ package moe.slk.kotlua.vm
 import moe.slk.kotlua.vm.OpArgMask.*
 import moe.slk.kotlua.vm.OpMode.*
 
+/**
+ * 指令表定义
+ */
 enum class OpCode(
     val testFlag: Int,
     val setAFlag: Int,

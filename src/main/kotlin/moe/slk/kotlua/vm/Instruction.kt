@@ -20,6 +20,11 @@ import moe.slk.kotlua.vm.OpMode.*
 const val MAXARG_Bx = (1 shl 18) - 1   // 262143
 const val MAXARG_sBx = MAXARG_Bx shr 1 // 131071
 
+/**
+ * 指令码解码器
+ * @param content 指令码
+ * @property
+ */
 class Instruction(content: Int) {
 
     val opCode = OpCode.values()[content and 0x3F]
@@ -36,6 +41,9 @@ class Instruction(content: Int) {
 
     val ax = content.ushr(6)
 
+    /**
+     * 打印指令操作数
+     */
     fun printOperands() {
         with(this) {
             when (opCode.opMode) {

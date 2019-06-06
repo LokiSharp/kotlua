@@ -32,6 +32,7 @@ fun testLuaState(path: String) {
     printStack(ls)
 }
 
+
 private fun printStack(ls: LuaState) {
     for (i in 1..ls.top) {
         when (val t = ls.type(i)) {

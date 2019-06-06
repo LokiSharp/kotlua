@@ -12,10 +12,11 @@ import moe.slk.kotlua.binchunk.Prototype
 
 /**
  * 实现堆栈操作
+ * @param proto 函数原型
  * @property stack 用于存放堆栈
  * @property top 用于记录栈顶索引
  */
-class LuaStateImpl(val proto: Prototype) : LuaVM {
+class LuaStateImpl(private val proto: Prototype) : LuaVM {
     private val stack = LuaStack()
     private var pc = 0
     override var top: Int
@@ -317,6 +318,10 @@ class LuaStateImpl(val proto: Prototype) : LuaVM {
         stack.push(s)
     }
 
+    /**
+     * 执行算术和按位运算
+     * @param op 运算符
+     */
     override fun arith(op: ArithOp) {
         val b = stack.pop()
         val a = if (op != LUA_OPUNM && op != LUA_OPBNOT) {
@@ -333,6 +338,13 @@ class LuaStateImpl(val proto: Prototype) : LuaVM {
         }
     }
 
+    /**
+     * 对指定索引处的两个值进行比较
+     * @param idx1 索引
+     * @param idx2 索引
+     * @param op 运算符
+     * @return 布尔值
+     */
     override fun compare(idx1: Int, idx2: Int, op: CmpOp): Boolean {
         if (!stack.isValid(idx1) || !stack.isValid(idx2)) {
             return false
@@ -348,6 +360,10 @@ class LuaStateImpl(val proto: Prototype) : LuaVM {
         }
     }
 
+    /**
+     * 访问指定索引处的值，取其长度，然后推入栈顶
+     * @param idx 索引
+     */
     override fun len(idx: Int) {
         val value = stack.get(idx)
 
@@ -358,6 +374,10 @@ class LuaStateImpl(val proto: Prototype) : LuaVM {
         }
     }
 
+    /**
+     * 方法从栈顶弹出 n 个值，对这些值进行拼接，然后把结果推入栈顶
+     * @param n 值的数量
+     */
     override fun concat(n: Int) {
         if (n == 0) {
             stack.push("")
@@ -379,22 +399,43 @@ class LuaStateImpl(val proto: Prototype) : LuaVM {
     }
 
     /* LuaVM */
+
+    /**
+     * 获取程序计数器值
+     * @return 程序计数器值
+     */
     override fun getPC(): Int {
         return pc
     }
 
+    /**
+     * 增加程序计数器值
+     * @param n 增加的值
+     */
     override fun addPC(n: Int) {
         pc += n
     }
 
+    /**
+     * 根据 PC 索引从函数原型的指令表里取出当前指令，然后把 PC 加 1
+     * @return 指令码
+     */
     override fun fetch(): Int {
         return proto.code[pc++]
     }
 
+    /**
+     * 根据索引从函数原型的常量表里取出一个常量值，然后把它推入栈顶
+     * @param idx 索引
+     */
     override fun getConst(idx: Int) {
         stack.push(proto.constants[idx])
     }
 
+    /**
+     * 据情况调用 [getConst] 方法把某个常量推入栈顶，或者调用 [pushValue] 方法把某个索引处的栈值推入栈顶
+     * @param rk 索引
+     */
     override fun getRK(rk: Int) {
         if (rk > 0xFF) { // constant
             getConst(rk and 0xFF)

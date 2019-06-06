@@ -5,6 +5,11 @@ import moe.slk.kotlua.number.isInteger
 import moe.slk.kotlua.number.parseFloat
 import moe.slk.kotlua.number.parseInteger
 
+/**
+ * 检查对象类型
+ * @param value 待检查的对象
+ * @return 对象类型
+ */
 fun typeOf(value: Any?) = when (value) {
     null -> LUA_TNIL
     is Boolean -> LUA_TBOOLEAN
@@ -13,6 +18,11 @@ fun typeOf(value: Any?) = when (value) {
     else -> throw Exception("Don't support ${value::class.simpleName}")
 }
 
+/**
+ * 将对象转换为布尔型
+ * @param value 待转换的对象
+ * @return 布尔型
+ */
 fun toBoolean(value: Any?) = when (value) {
     null -> false
     is Boolean -> value
@@ -20,6 +30,12 @@ fun toBoolean(value: Any?) = when (value) {
 }
 
 // http://www.lua.org/manual/5.3/manual.html#3.4.3
+
+/**
+ * 将对象转换为浮点型
+ * @param value 待转换的对象
+ * @return 浮点型
+ */
 fun toFloat(value: Any?) = when (value) {
     is Double -> value
     is Long -> value.toDouble()
@@ -28,6 +44,12 @@ fun toFloat(value: Any?) = when (value) {
 }
 
 // http://www.lua.org/manual/5.3/manual.html#3.4.3
+
+/**
+ * 将对象转换为整型
+ * @param value 待转换的对象
+ * @return 整型
+ */
 fun toInteger(value: Any?) = when (value) {
     is Long -> value
     is Double -> if (isInteger(value)) value.toLong() else null
@@ -35,6 +57,11 @@ fun toInteger(value: Any?) = when (value) {
     else -> null
 }
 
+/**s
+ * 将字符串对象转换为整型
+ * @param  s 待转换的字符串对象
+ * @return 整型
+ */
 private fun toInteger(s: String): Long? {
     val i = parseInteger(s)
     if (i != null) {

@@ -1,7 +1,7 @@
 package moe.slk.kotlua.state
 
 /**
- * 检查对象类型
+ * 实现堆栈
  * @property slots 用于存放值
  * @property top 用于记录栈顶索引
  */

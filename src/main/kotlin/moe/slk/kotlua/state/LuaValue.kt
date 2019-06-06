@@ -57,7 +57,7 @@ fun toInteger(value: Any?) = when (value) {
     else -> null
 }
 
-/**s
+/**
  * 将字符串对象转换为整型
  * @param  s 待转换的字符串对象
  * @return 整型

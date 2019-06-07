@@ -1,7 +1,6 @@
 package kotlua.test
 
 import moe.slk.kotlua.api.LuaState
-import moe.slk.kotlua.binchunk.Prototype
 import moe.slk.kotlua.state.LuaStateImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -10,7 +9,6 @@ import org.junit.Test
 class LuaStateStackTest {
 
     private var ls: LuaState? = null
-    private val proto = Prototype()
 
     private fun lsToString(): String {
         val sb = StringBuilder()
@@ -22,7 +20,7 @@ class LuaStateStackTest {
 
     @Before
     fun initLuaState() {
-        ls = LuaStateImpl(proto)
+        ls = LuaStateImpl()
         for (i in 1..9) {
             ls!!.pushInteger(i.toLong())
         }

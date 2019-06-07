@@ -11,8 +11,8 @@ import java.util.*
  */
 internal class LuaTable(nArr: Int, nRec: Int) {
 
-    private var arr: MutableList<Any>? = null
-    private var map: MutableMap<Any, Any>? = null
+    private var arr: MutableList<Any?>? = null
+    private var map: MutableMap<Any?, Any>? = null
 
     init {
         if (nArr > 0) {
@@ -23,7 +23,7 @@ internal class LuaTable(nArr: Int, nRec: Int) {
         }
     }
 
-    fun getLength() = if (arr == null) 0 else arr!!.size
+    fun length() = if (arr == null) 0 else arr!!.size
 
     /**
      * 根据键从表里取出值
@@ -49,39 +49,56 @@ internal class LuaTable(nArr: Int, nRec: Int) {
      * @param value 值
      */
     fun put(key: Any?, value: Any?) {
-        if (key == null) {
-            throw Exception("table index is nil!")
-        }
-        if (key is Double && key.isNaN()) {
+        var key_: Any? = key ?: throw Exception("table index is nil!")
+        if (key_ is Double && key_.isNaN()) {
             throw Exception("table index is NaN!")
         }
-        val i = floatToInt(key)
-        if (i is Long && i >= 1) {
-            val idx = i.toInt()
-            val arrLen = arr!!.size
-            if (idx <= arrLen) {
-                arr!![idx - 1] = value!!
-                return
-            }
-            if (idx == arrLen + 1) {
-                if (map != null) {
-                    map!!.remove(key)
+
+        key_ = floatToInt(key_)
+        if (key_ is Long) {
+            val idx = key_.toInt()
+            if (idx >= 1) {
+                if (arr == null) {
+                    arr = ArrayList()
                 }
-                if (value != null) {
-                    arr!!.add(value)
-                    expandArray()
+
+                val arrLen = arr!!.size
+                if (idx <= arrLen) {
+                    arr!!.set(idx - 1, value)
+                    if (idx == arrLen && value == null) {
+                        shrinkArray()
+                    }
+                    return
                 }
-                return
+                if (idx == arrLen + 1) {
+                    if (map != null) {
+                        map!!.remove(key_)
+                    }
+                    if (value != null) {
+                        arr!!.add(value)
+                        expandArray()
+                    }
+                    return
+                }
             }
         }
+
         if (value != null) {
             if (map == null) {
                 map = HashMap()
             }
-            map?.set(key, value)
+            map!![key_] = value
         } else {
             if (map != null) {
-                map!!.remove(key)
+                map!!.remove(key_)
+            }
+        }
+    }
+
+    private fun shrinkArray() {
+        for (i in arr!!.indices.reversed()) {
+            if (arr!![i] == null) {
+                arr!!.removeAt(i)
             }
         }
     }

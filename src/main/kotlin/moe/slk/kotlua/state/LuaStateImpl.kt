@@ -1,25 +1,21 @@
 package moe.slk.kotlua.state
 
-import moe.slk.kotlua.api.ArithOp
+import moe.slk.kotlua.api.*
 import moe.slk.kotlua.api.ArithOp.LUA_OPBNOT
 import moe.slk.kotlua.api.ArithOp.LUA_OPUNM
-import moe.slk.kotlua.api.CmpOp
 import moe.slk.kotlua.api.CmpOp.*
-import moe.slk.kotlua.api.LuaType
 import moe.slk.kotlua.api.LuaType.*
-import moe.slk.kotlua.api.LuaVM
-import moe.slk.kotlua.binchunk.Prototype
+import moe.slk.kotlua.binchunk.unDump
+import moe.slk.kotlua.vm.Instruction
 
 
 /**
  * 实现堆栈操作
- * @param proto 函数原型
  * @property stack 用于存放堆栈
  * @property top 用于记录栈顶索引
  */
-class LuaStateImpl(private val proto: Prototype) : LuaVM {
-    private val stack = LuaStack()
-    private var pc = 0
+class LuaStateImpl : LuaVM {
+    private var stack = LuaStack()
     override var top: Int
         get() = stack.top
         set(idx) {
@@ -39,6 +35,18 @@ class LuaStateImpl(private val proto: Prototype) : LuaVM {
                 }
             }
         }
+
+
+    private fun pushLuaStack(newTop: LuaStack) {
+        newTop.prev = this.stack
+        stack = newTop
+    }
+
+    private fun popLuaStack() {
+        val top = this.stack
+        stack = top.prev!!
+        top.prev = null
+    }
 
     /**
      * 将索引转换成绝对索引
@@ -369,7 +377,7 @@ class LuaStateImpl(private val proto: Prototype) : LuaVM {
 
         when (val value = stack.get(idx)) {
             is String -> pushInteger(value.length.toLong())
-            is LuaTable -> pushInteger(value.getLength().toLong())
+            is LuaTable -> pushInteger(value.length().toLong())
             else -> throw Exception("length error!")
         }
     }
@@ -400,20 +408,13 @@ class LuaStateImpl(private val proto: Prototype) : LuaVM {
 
     /* LuaVM */
 
-    /**
-     * 获取程序计数器值
-     * @return 程序计数器值
-     */
-    override fun getPC(): Int {
-        return pc
-    }
 
     /**
      * 增加程序计数器值
      * @param n 增加的值
      */
     override fun addPC(n: Int) {
-        pc += n
+        stack.pc += n
     }
 
     /**
@@ -421,7 +422,10 @@ class LuaStateImpl(private val proto: Prototype) : LuaVM {
      * @return 指令码
      */
     override fun fetch(): Int {
-        return proto.code[pc++]
+        val i = stack.closure!!.proto.code[stack.pc]
+        stack.pc += 1
+
+        return i
     }
 
     /**
@@ -429,7 +433,7 @@ class LuaStateImpl(private val proto: Prototype) : LuaVM {
      * @param idx 索引
      */
     override fun getConst(idx: Int) {
-        stack.push(proto.constants[idx])
+        stack.push(stack.closure!!.proto.constants[idx])
     }
 
     /**
@@ -521,6 +525,67 @@ class LuaStateImpl(private val proto: Prototype) : LuaVM {
         setTable(t, k, v)
     }
 
+    /* 'load' and 'call' functions */
+
+    override fun load(chunk: ByteArray, chunkName: String, mode: String): ThreadStatus {
+        stack.push(Closure(unDump(chunk)))
+        return ThreadStatus.LUA_OK
+    }
+
+    override fun call(nArgs: Int, nResults: Int) {
+        val value = stack.get(-(nArgs + 1))
+        if (value is Closure) {
+            println("call ${value.proto.source}<${value.proto.lineDefined},${value.proto.lastLineDefined}>")
+            callLuaClosure(nArgs, nResults, value)
+        } else {
+            throw Exception("not function!")
+        }
+    }
+
+    private fun callLuaClosure(nArgs: Int, nResults: Int, c: Closure) {
+        val proto = c.proto
+
+        val nRegs = proto.maxStackSize
+        val nParams = proto.numParams
+        val isVararg = proto.isVararg.toInt() == 1
+
+        // create new lua stack
+        val newStack = LuaStack(/*nRegs + 20*/)
+        newStack.closure = c
+
+        // pass args, pop func
+        val funcAndArgs = stack.popN(nArgs + 1)
+        newStack.pushN(funcAndArgs.subList(1, funcAndArgs.size), nParams.toInt())
+        if (nArgs > nParams && isVararg) {
+            newStack.varargs = funcAndArgs.subList(nParams + 1, funcAndArgs.size)
+        }
+
+        // run closure
+        pushLuaStack(newStack)
+        top = nRegs.toInt()
+        runLuaClosure()
+        popLuaStack()
+
+        // return results
+        if (nResults != 0) {
+            val results = newStack.popN(newStack.top - nRegs)
+            //stack.check(results.size())
+            stack.pushN(results, nResults)
+        }
+    }
+
+    private fun runLuaClosure() {
+        while (true) {
+            val i = Instruction(fetch())
+
+            i.execute(this)
+
+            if (i.isReturn) {
+                break
+            }
+        }
+    }
+
     /**
      * 把字符串写入表
      * @param idx 索引
@@ -555,5 +620,21 @@ class LuaStateImpl(private val proto: Prototype) : LuaVM {
             return
         }
         throw Exception("not a table!")
+    }
+
+    override fun registerCount(): Int {
+        return stack.closure!!.proto.maxStackSize.toInt()
+    }
+
+    override fun loadVararg(n: Int) {
+        val varargs = if (stack.varargs != null) stack.varargs!! else emptyList()
+        val n_ = if (n < 0) varargs.size else n
+
+        stack.pushN(varargs, n_)
+    }
+
+    override fun loadProto(idx: Int) {
+        val proto = stack.closure!!.proto.protos[idx]
+        stack.push(Closure(proto))
     }
 }

@@ -6,7 +6,14 @@ package moe.slk.kotlua.state
  * @property top 用于记录栈顶索引
  */
 internal class LuaStack {
+    /* virtual stack */
     val slots = ArrayList<Any?>()
+    /* call info */
+    var closure: Closure? = null
+    var varargs: List<Any>? = null
+    var pc: Int = 0
+    /* linked list */
+    var prev: LuaStack? = null
     val top: Int
         inline get() = slots.size
 
@@ -25,6 +32,26 @@ internal class LuaStack {
      * 从栈顶弹出一个值
      */
     fun pop() = slots.removeAt(slots.lastIndex)
+
+    fun pushN(vals: List<Any>?, n: Int) {
+        var n = n
+        val nVals = vals?.size ?: 0
+        if (n < 0) {
+            n = nVals
+        }
+        for (i in 0 until n) {
+            push(if (i < nVals) vals!![i] else null)
+        }
+    }
+
+    fun popN(n: Int): List<Any> {
+        val vals = java.util.ArrayList<Any>(n)
+        for (i in 0 until n) {
+            pop()?.let { vals.add(it) }
+        }
+        vals.reverse()
+        return vals
+    }
 
     /**
      * 将索引转换成绝对索引

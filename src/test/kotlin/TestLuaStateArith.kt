@@ -3,7 +3,6 @@ package kotlua.test
 import moe.slk.kotlua.api.ArithOp
 import moe.slk.kotlua.api.ArithOp.*
 import moe.slk.kotlua.api.LuaState
-import moe.slk.kotlua.binchunk.Prototype
 import moe.slk.kotlua.state.LuaStateImpl
 import org.junit.Assert
 import org.junit.Test
@@ -12,8 +11,6 @@ import java.lang.Double.POSITIVE_INFINITY
 
 
 class LuaStateArithTest {
-
-    private val proto = Prototype()
 
     @Test
     fun idiv() {
@@ -45,7 +42,7 @@ class LuaStateArithTest {
     }
 
     private fun calc(x: Any, y: Any, op: ArithOp): Any {
-        val ls = LuaStateImpl(proto)
+        val ls = LuaStateImpl()
         pushOperand(ls, x)
         pushOperand(ls, y)
         ls.arith(op)

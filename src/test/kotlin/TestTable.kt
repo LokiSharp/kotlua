@@ -1,6 +1,6 @@
 package kotlua.test
 
-import moe.slk.kotlua.binchunk.BinaryChunk
+import moe.slk.kotlua.binchunk.unDump
 import moe.slk.kotlua.state.LuaStateImpl
 import moe.slk.kotlua.vm.Instruction
 import moe.slk.kotlua.vm.OpCode
@@ -17,9 +17,10 @@ class TestTable {
                 this.javaClass.getResource("/table.luac").toURI()
             )
         )
-        val proto = BinaryChunk.unDump(data)
+        val proto = unDump(data)
 
-        val vm = LuaStateImpl(proto)
+        val vm = LuaStateImpl()
+        vm.load(data, "", "a")
         vm.top = proto.maxStackSize.toInt()
 
         while (true) {

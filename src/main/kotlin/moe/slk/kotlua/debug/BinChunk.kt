@@ -1,7 +1,7 @@
 package moe.slk.kotlua.debug
 
-import moe.slk.kotlua.binchunk.BinaryChunk
 import moe.slk.kotlua.binchunk.Prototype
+import moe.slk.kotlua.binchunk.unDump
 import moe.slk.kotlua.vm.Instruction
 import moe.slk.kotlua.vm.OpCode
 import java.nio.file.Files
@@ -9,7 +9,7 @@ import java.nio.file.Paths
 
 fun printBinChunk(path: String) {
     val data = Files.readAllBytes(Paths.get(path)) as ByteArray
-    val proto = BinaryChunk.unDump(data)
+    val proto = unDump(data)
     list(proto)
 }
 

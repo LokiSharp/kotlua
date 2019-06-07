@@ -1,7 +1,5 @@
 package moe.slk.kotlua.binchunk
 
-import java.nio.ByteBuffer
-
 /**
  * 函数原型定义
  *
@@ -22,148 +20,18 @@ import java.nio.ByteBuffer
  * @property localVars 局部变量表
  * @property upvalueNames Upvalue 名表
  */
-class Prototype {
-    var source: String = ""
-    var lineDefined: Int = 0
-    var lastLineDefined: Int = 0
-    var numParams: Byte = 0
-    var isVararg: Byte = 0
-    var maxStackSize: Byte = 0
-    val code: MutableList<Int> = mutableListOf()
-    val constants: MutableList<Any?> = mutableListOf()
-    val upvalues: MutableList<Upvalue> = mutableListOf()
-    val protos: MutableList<Prototype> = mutableListOf()
-    val lineInfo: MutableList<Int> = mutableListOf()
-    val localVars: MutableList<LocVar> = mutableListOf()
-    val upvalueNames: MutableList<String> = mutableListOf()
-
-    /**
-     * 从字节流中读取函数原型
-     *
-     * @param buf 待读取的字节流
-     * @param parentSource 父函数的源文件名
-     */
-    fun read(buf: ByteBuffer, parentSource: String = "") {
-        source = BinaryChunk.getString(buf)
-        if (source.isEmpty()) {
-            source = parentSource
-        }
-        lineDefined = buf.int
-        lastLineDefined = buf.int
-        numParams = buf.get()
-        isVararg = buf.get()
-        maxStackSize = buf.get()
-        readCode(buf)
-        readConstants(buf)
-        readUpvalues(buf)
-        readProtos(buf, source)
-        readLineInfo(buf)
-        readLocVars(buf)
-        readUpvalueNames(buf)
-    }
-
-    /**
-     * 从字节流中读取指令表
-     */
-    private fun readCode(buf: ByteBuffer) {
-        val length = buf.int
-
-        repeat(length) {
-            this.code.add(buf.int)
-        }
-    }
-
-    /**
-     * 从字节流中读取常量表
-     */
-    private fun readConstants(buf: ByteBuffer): List<Any?> {
-        val length = buf.int
-
-        repeat(length) {
-            constants.add(readConstant(buf))
-        }
-
-        return constants
-    }
-
-    /**
-     * 从字节流中读取常量
-     */
-    private fun readConstant(buf: ByteBuffer): Any? {
-        return when (buf.get().toInt()) {
-            TAG_NIL -> null
-            TAG_BOOLEAN -> buf.get().toInt() != 0
-            TAG_INTEGER -> buf.long
-            TAG_NUMBER -> buf.double
-            TAG_SHORT_STR, TAG_LONG_STR -> BinaryChunk.getString(buf)
-            else -> throw RuntimeException("corrupted!")
-        }
-    }
-
-
-    /**
-     * 从字节流中读取 Upvalue 表
-     */
-    private fun readUpvalues(buf: ByteBuffer) {
-        val length = buf.int
-
-        repeat(length) {
-            upvalues.add(
-                Upvalue(
-                    inStack = buf.get(),
-                    idx = buf.get()
-                )
-            )
-        }
-    }
-
-    /**
-     * 从字节流中读取函数原型表
-     */
-    private fun readProtos(buf: ByteBuffer, parentSource: String = "") {
-        val length = buf.int
-
-        repeat(length) {
-            read(buf, parentSource)
-        }
-    }
-
-    /**
-     * 从字节流中读取行号表
-     */
-    private fun readLineInfo(buf: ByteBuffer) {
-        val size = buf.int
-
-        repeat(size) {
-            lineInfo.add(buf.int)
-        }
-    }
-
-    /**
-     * 从字节流中读取局部变量表
-     */
-    private fun readLocVars(buf: ByteBuffer) {
-        val size = buf.int
-
-        repeat(size) {
-            localVars.add(
-                LocVar(
-                    varName = BinaryChunk.getString(buf),
-                    startPC = buf.int,
-                    endPC = buf.int
-                )
-            )
-        }
-    }
-
-    /**
-     * 从字节流中读取 Upvalue 名表
-     */
-    private fun readUpvalueNames(buf: ByteBuffer) {
-        val size = buf.int
-
-        repeat(size) {
-            upvalueNames.add(BinaryChunk.getString(buf))
-        }
-    }
-}
+data class Prototype(
+    val source: String,
+    val lineDefined: Int,
+    val lastLineDefined: Int,
+    val numParams: Byte,
+    val isVararg: Byte,
+    val maxStackSize: Byte,
+    val code: List<Int>,
+    val constants: List<Any?>,
+    val upvalues: List<Upvalue>,
+    val protos: List<Prototype>,
+    val lineInfo: List<Int>,
+    val localVars: List<LocVar>,
+    val upvalueNames: List<String>
+)

@@ -1,5 +1,6 @@
 package moe.slk.kotlua.vm
 
+import moe.slk.kotlua.api.LuaVM
 import moe.slk.kotlua.vm.OpArgMask.*
 import moe.slk.kotlua.vm.OpMode.*
 
@@ -37,6 +38,12 @@ class Instruction(content: Int) {
     val sBx = bx - MAXARG_sBx
 
     val ax = content.ushr(6)
+
+    val isReturn = opCode === OpCode.RETURN
+
+    fun execute(vm: LuaVM) {
+        opCode.action!!(this, vm)
+    }
 
     /**
      * 打印指令操作数

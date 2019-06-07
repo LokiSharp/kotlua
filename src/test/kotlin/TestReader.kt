@@ -1,12 +1,12 @@
 package kotlua.test
 
-import moe.slk.kotlua.binchunk.BinaryChunk
+import moe.slk.kotlua.binchunk.unDump
 import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Paths
 
-class TestBinaryChunk {
+class TestReader {
     @Test
     fun testUnDumpWithHelloWorldLua() {
         val data = Files.readAllBytes(
@@ -14,7 +14,7 @@ class TestBinaryChunk {
                 this.javaClass.getResource("/hello_world.luac").toURI()
             )
         )
-        val proto = BinaryChunk.unDump(data)
+        val proto = unDump(data)
 
         with(proto) {
             Assert.assertEquals("@hello_world.lua", source)

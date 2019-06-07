@@ -63,5 +63,10 @@ interface LuaState {
     /* miscellaneous functions */
     fun len(idx: Int)
 
+    /* 'load' and 'call' functions (load and run Lua code) */
+    fun load(chunk: ByteArray, chunkName: String, mode: String): ThreadStatus
+
+    fun call(nArgs: Int, nResults: Int)
+
     fun concat(n: Int)
 }

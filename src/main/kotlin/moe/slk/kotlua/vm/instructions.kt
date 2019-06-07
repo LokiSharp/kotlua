@@ -694,15 +694,31 @@ private fun fixStack(a: Int, vm: LuaVM) {
 }
 
 private fun popResults(a: Int, c: Int, vm: LuaVM) {
-    if (c == 1) {
-        // no results
-    } else if (c > 1) {
-        for (i in a + c - 2 downTo a) {
+    when {
+        c == 1 -> {
+            // no results
+        }
+        c > 1 -> for (i in a + c - 2 downTo a) {
             vm.replace(i)
         }
-    } else {
-        // leave results on stack
-        vm.checkStack(1)
-        vm.pushInteger(a.toLong())
+        else -> {
+            // leave results on stack
+            vm.checkStack(1)
+            vm.pushInteger(a.toLong())
+        }
     }
+}
+
+/* upvalues */
+
+// R(A) := UpValue[B][RK(C)]
+fun getTabUp(i: Instruction, vm: LuaVM) {
+    val a = i.a + 1
+    val c = i.c
+
+    vm.pushGlobalTable()
+    vm.getRK(c)
+    vm.getTable(-2)
+    vm.replace(a)
+    vm.pop(1)
 }

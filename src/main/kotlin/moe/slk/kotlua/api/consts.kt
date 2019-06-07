@@ -1,4 +1,4 @@
-package moe.slk.kotlua.binchunk
+package moe.slk.kotlua.api
 
 val LUA_SIGNATURE = byteArrayOf(0x1b, 'L'.toByte(), 'u'.toByte(), 'a'.toByte())
 const val LUAC_VERSION = 0x53
@@ -18,3 +18,8 @@ const val TAG_NUMBER = 0x03
 const val TAG_INTEGER = 0x13
 const val TAG_SHORT_STR = 0x04
 const val TAG_LONG_STR = 0x14
+
+const val LUA_MINSTACK: Int = 20
+const val LUAI_MAXSTACK: Int = 1000000
+const val LUA_REGISTRYINDEX: Int = -LUAI_MAXSTACK - 1000
+const val LUA_RIDX_GLOBALS: Long = 2

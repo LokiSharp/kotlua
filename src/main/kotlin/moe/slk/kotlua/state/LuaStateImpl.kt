@@ -15,6 +15,7 @@ import moe.slk.kotlua.vm.Instruction
  * @property top 用于记录栈顶索引
  */
 class LuaStateImpl : LuaVM {
+    internal var registry = LuaTable(0, 0)
     private var stack = LuaStack()
     override var top: Int
         get() = stack.top
@@ -36,6 +37,14 @@ class LuaStateImpl : LuaVM {
             }
         }
 
+    init {
+        registry.put(LUA_RIDX_GLOBALS, LuaTable(0, 0))
+
+        val stack = LuaStack()
+        stack.state = this
+
+        pushLuaStack(stack)
+    }
 
     private fun pushLuaStack(newTop: LuaStack) {
         newTop.prev = this.stack
@@ -422,7 +431,7 @@ class LuaStateImpl : LuaVM {
      * @return 指令码
      */
     override fun fetch(): Int {
-        val i = stack.closure!!.proto.code[stack.pc]
+        val i = stack.closure!!.proto!!.code[stack.pc]
         stack.pc += 1
 
         return i
@@ -433,7 +442,7 @@ class LuaStateImpl : LuaVM {
      * @param idx 索引
      */
     override fun getConst(idx: Int) {
-        stack.push(stack.closure!!.proto.constants[idx])
+        stack.push(stack.closure!!.proto!!.constants[idx])
     }
 
     /**
@@ -535,17 +544,43 @@ class LuaStateImpl : LuaVM {
     override fun call(nArgs: Int, nResults: Int) {
         val value = stack.get(-(nArgs + 1))
         if (value is Closure) {
-            println("call ${value.proto.source}<${value.proto.lineDefined},${value.proto.lastLineDefined}>")
-            callLuaClosure(nArgs, nResults, value)
+            if (value.proto != null) {
+                callLuaClosure(nArgs, nResults, value)
+            } else {
+                callKotlinClosure(nArgs, nResults, value)
+            }
         } else {
             throw Exception("not function!")
+        }
+    }
+
+    private fun callKotlinClosure(nArgs: Int, nResults: Int, c: Closure) {
+        val newStack = LuaStack()
+        newStack.closure = c
+
+        // pass args, pop func
+        if (nArgs > 0) {
+            newStack.pushN(stack.popN(nArgs), nArgs)
+        }
+        stack.pop()
+
+        // run closure
+        pushLuaStack(newStack)
+        val r = c.kFunc!!(this)
+        popLuaStack()
+
+        // return results
+        if (nResults != 0) {
+            val results = newStack.popN(r)
+            //stack.check(results.size())
+            stack.pushN(results, nResults)
         }
     }
 
     private fun callLuaClosure(nArgs: Int, nResults: Int, c: Closure) {
         val proto = c.proto
 
-        val nRegs = proto.maxStackSize
+        val nRegs = proto!!.maxStackSize
         val nParams = proto.numParams
         val isVararg = proto.isVararg.toInt() == 1
 
@@ -623,18 +658,49 @@ class LuaStateImpl : LuaVM {
     }
 
     override fun registerCount(): Int {
-        return stack.closure!!.proto.maxStackSize.toInt()
+        return stack.closure!!.proto!!.maxStackSize.toInt()
     }
 
     override fun loadVararg(n: Int) {
         val varargs = if (stack.varargs != null) stack.varargs!! else emptyList()
-        val n_ = if (n < 0) varargs.size else n
-
-        stack.pushN(varargs, n_)
+        stack.pushN(varargs, if (n < 0) varargs.size else n)
     }
 
     override fun loadProto(idx: Int) {
-        val proto = stack.closure!!.proto.protos[idx]
+        val proto = stack.closure!!.proto!!.protos[idx]
         stack.push(Closure(proto))
+    }
+
+    override fun isKFunction(idx: Int): Boolean {
+        val value = stack.get(idx)
+        return value is Closure && value.kFunc != null
+    }
+
+    override fun toKFunction(idx: Int): KFunction? {
+        val value = stack.get(idx)
+
+        return if (value is Closure) value.kFunc else null
+    }
+
+    override fun pushKFunction(f: KFunction) {
+        stack.push(Closure(kFunc = f))
+    }
+
+    override fun pushGlobalTable() {
+        val global = registry[LUA_RIDX_GLOBALS]
+        stack.push(global)
+    }
+
+    override fun getGlobal(name: String): LuaType {
+        return getTable(registry[LUA_RIDX_GLOBALS], name)
+    }
+
+    override fun register(name: String, f: KFunction) {
+        pushKFunction(f)
+        setGlobal(name)
+    }
+
+    override fun setGlobal(name: String) {
+        setTable(registry[LUA_RIDX_GLOBALS], name, stack.pop())
     }
 }

@@ -42,6 +42,7 @@ interface LuaState {
     fun pushInteger(n: Long)
     fun pushNumber(n: Double)
     fun pushString(s: String)
+    fun pushGlobalTable()
 
     fun arith(op: ArithOp)
     fun compare(idx1: Int, idx2: Int, op: CmpOp): Boolean
@@ -53,12 +54,16 @@ interface LuaState {
     fun getTable(idx: Int): LuaType
     fun getField(idx: Int, k: String): LuaType
     fun getI(idx: Int, i: Long): LuaType
+    fun getGlobal(name: String): LuaType
 
     /* set functions (stack -> Lua) */
     fun setTable(idx: Int)
 
     fun setField(idx: Int, k: String)
     fun setI(idx: Int, i: Long)
+    fun setGlobal(name: String)
+
+    fun register(name: String, f: KFunction)
 
     /* miscellaneous functions */
     fun len(idx: Int)
@@ -69,4 +74,8 @@ interface LuaState {
     fun call(nArgs: Int, nResults: Int)
 
     fun concat(n: Int)
+
+    fun isKFunction(idx: Int): Boolean
+    fun toKFunction(idx: Int): KFunction?
+    fun pushKFunction(f: KFunction)
 }

@@ -1,5 +1,7 @@
 package moe.slk.kotlua.state
 
+import moe.slk.kotlua.api.LUA_REGISTRYINDEX
+
 /**
  * 实现堆栈
  * @property slots 用于存放值
@@ -16,6 +18,7 @@ internal class LuaStack {
     var prev: LuaStack? = null
     val top: Int
         inline get() = slots.size
+    var state: LuaStateImpl? = null
 
     /**
      * 将值推入栈顶
@@ -34,12 +37,12 @@ internal class LuaStack {
     fun pop() = slots.removeAt(slots.lastIndex)
 
     fun pushN(vals: List<Any>?, n: Int) {
-        var n = n
+        var n1 = n
         val nVals = vals?.size ?: 0
-        if (n < 0) {
-            n = nVals
+        if (n1 < 0) {
+            n1 = nVals
         }
-        for (i in 0 until n) {
+        for (i in 0 until n1) {
             push(if (i < nVals) vals!![i] else null)
         }
     }
@@ -57,13 +60,17 @@ internal class LuaStack {
      * 将索引转换成绝对索引
      * @param idx 索引值
      */
-    fun absIndex(idx: Int) = if (idx >= 0) idx else idx + top + 1
+    fun absIndex(idx: Int) = when {
+        idx <= LUA_REGISTRYINDEX -> idx
+        idx >= 0 -> idx
+        else -> idx + top + 1
+    }
 
     /**
      * 判断索引是否有效
      * @param idx 索引值
      */
-    fun isValid(idx: Int) = absIndex(idx) in 1..top
+    fun isValid(idx: Int) = idx == LUA_REGISTRYINDEX || absIndex(idx) in 1..top
 
     /**
      * 从索引获取值
@@ -71,6 +78,10 @@ internal class LuaStack {
      * @return 索引对应的值
      */
     fun get(idx: Int): Any? {
+        if (idx == LUA_REGISTRYINDEX) {
+            return state!!.registry
+        }
+
         val absIdx = absIndex(idx)
 
         return if (isValid(idx)) {
@@ -86,6 +97,9 @@ internal class LuaStack {
      * @param value 索引对应的值
      */
     fun set(idx: Int, value: Any?) {
+        if (idx == LUA_REGISTRYINDEX) {
+            state!!.registry = value as LuaTable
+        }
         val absIdx = absIndex(idx)
 
         if (isValid(idx)) {
